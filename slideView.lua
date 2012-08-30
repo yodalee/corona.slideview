@@ -23,6 +23,7 @@
 
 module(..., package.seeall)
 
+local screenW, screenH = display.contentWidth, display.contentHeight
 local viewableScreenW, viewableScreenH = display.viewableContentWidth, display.viewableContentHeight
 local screenOffsetW, screenOffsetH = display.contentWidth -  display.viewableContentWidth, display.contentHeight - display.viewableContentHeight
 
@@ -63,7 +64,7 @@ function new(params)
 	if background then
 		slideBackground = display.newImage(background, 0, 0, true)
 	else
-		slideBackground = display.newRect( 0, 0, W, H-(top+bottom) )
+		slideBackground = display.newRect( 0, 0, screenW, screenH-(top+bottom) )
 		slideBackground:setFillColor(0, 0, 0)
 	end
 	g:insert(slideBackground)
@@ -77,19 +78,19 @@ function new(params)
 			callback = callback,
 			id = i,
 		}
-		local h = viewableScreenH-(top+bottom)
+		local screenH = viewableScreenH-(top+bottom)
 		g:insert(thisItem)
 
 		thisItem:setReferencePoint(display.CenterReferencePoint)
 		if (i > 1) then
-			thisItem.x = W * 1.5 + pad -- all items offscreen except the first one
+			thisItem.x = screenW * 1.5 + pad -- all items offscreen except the first one
 		else 
-			thisItem.x = W*.5
+			thisItem.x = screenW*.5
 		end
 		if thisItem.width > 0.6*viewableScreenW then
 			thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
 		end
-		thisItem.y = h*.5
+		thisItem.y = screenH*.5
 		items[i] = thisItem
 	end
 	
@@ -152,30 +153,30 @@ function new(params)
 		prevTween = tween 
 	end
 	function nextImage()
-		tween = transition.to( items[itemNum], {time=400, x=(W*.5 + pad)*-1, transition=easing.outExpo } )
-		tween = transition.to( items[itemNum+1], {time=400, x=W*.5, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum], {time=400, x=(screenW*.5 + pad)*-1, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum+1], {time=400, x=screenW*.5, transition=easing.outExpo } )
 		itemNum = itemNum + 1
 		initItem(itemNum)
 	end
 	
 	function prevImage()
-		tween = transition.to( items[itemNum], {time=400, x=W*1.5+pad, transition=easing.outExpo } )
-		tween = transition.to( items[itemNum-1], {time=400, x=W*.5, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum], {time=400, x=screenW*1.5+pad, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum-1], {time=400, x=screenW*.5, transition=easing.outExpo } )
 		itemNum = itemNum - 1
 		initItem(itemNum)
 	end
 	
 	function cancelMove()
-		tween = transition.to( items[itemNum], {time=400, x=W*.5, transition=easing.outExpo } )
-		tween = transition.to( items[itemNum-1], {time=400, x=(W*.5 + pad)*-1, transition=easing.outExpo } )
-		tween = transition.to( items[itemNum+1], {time=400, x=W*1.5+pad, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum], {time=400, x=screenW*.5, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum-1], {time=400, x=(screenW*.5 + pad)*-1, transition=easing.outExpo } )
+		tween = transition.to( items[itemNum+1], {time=400, x=screenW*1.5+pad, transition=easing.outExpo } )
 	end
 	function initItem(num)
 		if (num < #items) then
-			items[num+1].x = W*1.5 + pad			
+			items[num+1].x = screenW*1.5 + pad			
 		end
 		if (num > 1) then
-			items[num-1].x = (W*.5 + pad)*-1
+			items[num-1].x = (screenW*.5 + pad)*-1
 		end
 		--setSlideNumber()
 	end
@@ -192,11 +193,11 @@ function new(params)
 		print("#items", #items)
 		for i = 1, #items do
 			if i < num then
-				items[i].x = -W*.5;
+				items[i].x = -screenW*.5;
 			elseif i > num then
-				items[i].x = W*1.5 + pad
+				items[i].x = screenW*1.5 + pad
 			else
-				items[i].x = W*.5 - pad
+				items[i].x = screenW*.5 - pad
 			end
 		end
 		itemNum = num
