@@ -21,6 +21,9 @@
 -- OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 -- DEALINGS IN THE SOFTWARE.
 
+-- modify by yodalee at 20120830
+-- 2012-08-30: [add] callback function for customize slide but a simple image
+
 module(..., package.seeall)
 
 local screenW, screenH = display.contentWidth, display.contentHeight
@@ -29,7 +32,7 @@ local screenOffsetW, screenOffsetH = display.contentWidth -  display.viewableCon
 
 local itemNum = nil
 local items = nil
-local touchListener, nextImage, prevImage, cancelMove, initItem
+local touchListener, nextItem, prevItem, cancelMove, initItem
 local slideBackground
 local imageNumberText, imageNumberTextShadow
 
@@ -70,7 +73,7 @@ function new(params)
 	g:insert(slideBackground)
 	
 	items = {}
-	for i = 1,#data do
+	for i = 1,2 do
 		local thisItem = newItem{
 			data = data[i],
 			top = top,
@@ -80,7 +83,6 @@ function new(params)
 		}
 		local screenH = viewableScreenH-(top+bottom)
 		g:insert(thisItem)
-
 		thisItem:setReferencePoint(display.CenterReferencePoint)
 		if (i > 1) then
 			thisItem.x = screenW * 1.5 + pad -- all items offscreen except the first one
@@ -120,28 +122,17 @@ function new(params)
 				if (items[itemNum+1]) then
 					items[itemNum+1].x = items[itemNum+1].x + delta
 				end
-
 			elseif ( phase == "ended" or phase == "cancelled" ) then
-				
 				dragDistance = touch.x - startPos
 				print("dragDistance: " .. dragDistance)
-				
-				if (dragDistance < -40 and itemNum < #items) then
-					nextImage()
-				elseif (dragDistance > 40 and itemNum > 1) then
-					prevImage()
-				else
-					cancelMove()
+				if (dragDistance < -40 and itemNum < #items) then nextItem()
+				elseif (dragDistance > 40 and itemNum > 1) then prevItem()
+				else cancelMove()
 				end
-									
-				if ( phase == "cancelled" ) then		
-					cancelMove()
-				end
-
+				if ( phase == "cancelled" ) then cancelMove() end
                 -- Allow touch events to be sent normally to the objects they "hit"
                 display.getCurrentStage():setFocus( nil )
                 self.isFocus = false
-														
 			end
 		end
 					
@@ -152,17 +143,60 @@ function new(params)
 		if prevTween then transition.cancel(prevTween) end
 		prevTween = tween 
 	end
-	function nextImage()
+	function nextItem()
 		tween = transition.to( items[itemNum], {time=400, x=(screenW*.5 + pad)*-1, transition=easing.outExpo } )
 		tween = transition.to( items[itemNum+1], {time=400, x=screenW*.5, transition=easing.outExpo } )
 		itemNum = itemNum + 1
+		if itemNum+1 <= #data then
+			local screenH = viewableScreenH-(top+bottom)
+			local thisItem = newItem{
+				data = data[itemNum+1],
+				top = top,
+				bottom = bottom,
+				callback = callback,
+				id = i,
+			}
+			thisItem:setReferencePoint(display.CenterReferencePoint)
+			thisItem.x = screenW * 1.5 + pad -- all items offscreen except the first one
+			if thisItem.width > 0.6*viewableScreenW then
+				thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
+			end
+			thisItem.y = screenH*.5
+			g:insert(thisItem)
+			items[itemNum+1] = thisItem
+		end
+		if itemNum-2>0 then
+			items[itemNum-2]:removeSelf()
+		end
+
 		initItem(itemNum)
 	end
 	
-	function prevImage()
+	function prevItem()
 		tween = transition.to( items[itemNum], {time=400, x=screenW*1.5+pad, transition=easing.outExpo } )
 		tween = transition.to( items[itemNum-1], {time=400, x=screenW*.5, transition=easing.outExpo } )
 		itemNum = itemNum - 1
+		if itemNum-1 > 0 then
+			local screenH = viewableScreenH-(top+bottom)
+			local thisItem = newItem{
+				data = data[itemNum-1],
+				top = top,
+				bottom = bottom,
+				callback = callback,
+				id = i,
+			}
+			thisItem:setReferencePoint(display.CenterReferencePoint)
+			thisItem.x =-1*screenW * 1.5 - pad -- all items offscreen except the first one
+			if thisItem.width > 0.6*viewableScreenW then
+				thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
+			end
+			thisItem.y = screenH*.5
+			g:insert(thisItem)
+			items[itemNum-1] = thisItem
+		end
+		if itemNum+2 <= #data then
+			items[itemNum+2]:removeSelf()
+		end
 		initItem(itemNum)
 	end
 	
