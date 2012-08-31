@@ -26,7 +26,8 @@
 
 module(..., package.seeall)
 
-local screenW, screenH = display.contentWidth, display.contentHeight
+local screenW = display.contentWidth
+--local screenH = display.contentHeight
 local viewableScreenW, viewableScreenH = display.viewableContentWidth, display.viewableContentHeight
 local screenOffsetW, screenOffsetH = display.contentWidth -  display.viewableContentWidth, display.contentHeight - display.viewableContentHeight
 
@@ -42,6 +43,8 @@ function newItem(params)
 	local bottom = params.bottom
 	local callback = params.callback
 	local id = params.id
+	local x = params.x
+	local y = params.y
 
 	local thisItem = display.newGroup()
 	thisItem.id = id
@@ -50,6 +53,12 @@ function newItem(params)
 	thisItem.bottom = bottom
 	local t = callback(data)
 	thisItem:insert( t )
+	thisItem:setReferencePoint(display.CenterReferencePoint)
+	if thisItem.width > 0.6*viewableScreenW then
+		thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
+	end
+	if x then thisItem.x = x end
+	if y then thisItem.y = y end
 	return thisItem
 end
 
@@ -62,12 +71,14 @@ function new(params)
 	local pad = 20
 	local callback = params.callback
 
+	local screenH = viewableScreenH-(top+bottom)
+
 	local g = display.newGroup()
 		
 	if background then
 		slideBackground = display.newImage(background, 0, 0, true)
 	else
-		slideBackground = display.newRect( 0, 0, screenW, screenH-(top+bottom) )
+		slideBackground = display.newRect( 0, 0, screenW, screenH )
 		slideBackground:setFillColor(0, 0, 0)
 	end
 	g:insert(slideBackground)
@@ -80,19 +91,11 @@ function new(params)
 			bottom = bottom,
 			callback = callback,
 			id = i,
+			x = screenW*1.5+pad,
+			y = screenH*.5
 		}
-		local screenH = viewableScreenH-(top+bottom)
+		if (i == 1) then thisItem.x = screenW*.5 end -- all items offscreen except the first one
 		g:insert(thisItem)
-		thisItem:setReferencePoint(display.CenterReferencePoint)
-		if (i > 1) then
-			thisItem.x = screenW * 1.5 + pad -- all items offscreen except the first one
-		else 
-			thisItem.x = screenW*.5
-		end
-		if thisItem.width > 0.6*viewableScreenW then
-			thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
-		end
-		thisItem.y = screenH*.5
 		items[i] = thisItem
 	end
 	
@@ -148,26 +151,19 @@ function new(params)
 		tween = transition.to( items[itemNum+1], {time=400, x=screenW*.5, transition=easing.outExpo } )
 		itemNum = itemNum + 1
 		if itemNum+1 <= #data then
-			local screenH = viewableScreenH-(top+bottom)
 			local thisItem = newItem{
 				data = data[itemNum+1],
 				top = top,
 				bottom = bottom,
 				callback = callback,
 				id = i,
+				x = screenW * 1.5 + pad,
+				y = screenH*.5
 			}
-			thisItem:setReferencePoint(display.CenterReferencePoint)
-			thisItem.x = screenW * 1.5 + pad -- all items offscreen except the first one
-			if thisItem.width > 0.6*viewableScreenW then
-				thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
-			end
-			thisItem.y = screenH*.5
 			g:insert(thisItem)
 			items[itemNum+1] = thisItem
 		end
-		if itemNum-2>0 then
-			items[itemNum-2]:removeSelf()
-		end
+		if itemNum-2>0 then items[itemNum-2]:removeSelf() end
 
 		initItem(itemNum)
 	end
@@ -177,26 +173,19 @@ function new(params)
 		tween = transition.to( items[itemNum-1], {time=400, x=screenW*.5, transition=easing.outExpo } )
 		itemNum = itemNum - 1
 		if itemNum-1 > 0 then
-			local screenH = viewableScreenH-(top+bottom)
 			local thisItem = newItem{
 				data = data[itemNum-1],
 				top = top,
 				bottom = bottom,
 				callback = callback,
 				id = i,
+				x = -1 * screenW*1.5-pad,
+				y = screenH*.5
 			}
-			thisItem:setReferencePoint(display.CenterReferencePoint)
-			thisItem.x =-1*screenW * 1.5 - pad -- all items offscreen except the first one
-			if thisItem.width > 0.6*viewableScreenW then
-				thisItem.xScale, thisItem.yScale = 0.6*viewableScreenW/thisItem.width,0.6*viewableScreenW/thisItem.width
-			end
-			thisItem.y = screenH*.5
 			g:insert(thisItem)
 			items[itemNum-1] = thisItem
 		end
-		if itemNum+2 <= #data then
-			items[itemNum+2]:removeSelf()
-		end
+		if itemNum+2 <= #data then items[itemNum+2]:removeSelf() end
 		initItem(itemNum)
 	end
 	
@@ -221,23 +210,19 @@ function new(params)
 	------------------------
 	-- Define public methods
 	
-	function g:jumpToImage(num)
-		local i
-		print("jumpToImage")
-		print("#items", #items)
-		for i = 1, #items do
-			if i < num then
-				items[i].x = -screenW*.5;
-			elseif i > num then
-				items[i].x = screenW*1.5 + pad
-			else
-				items[i].x = screenW*.5 - pad
-			end
-		end
-		itemNum = num
-		initItem(itemNum)
-	end
-
+	--function g:jumpToImage(num)
+	--	local i
+	--	print("jumpToImage")
+	--	print("#items", #items)
+	--	for i = 1, #items do
+	--		if i < num then items[i].x = -screenW*.5;
+	--		elseif i > num then items[i].x = screenW*1.5 + pad
+	--		else items[i].x = screenW*.5 - pad
+	--		end
+	--	end
+	--	itemNum = num
+	--	initItem(itemNum)
+	--end
 	function g:cleanUp()
 		print("slides cleanUp")
 		slideBackground:removeEventListener("touch", touchListener)
