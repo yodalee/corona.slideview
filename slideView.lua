@@ -37,10 +37,8 @@ local touchListener, nextItem, prevItem, cancelMove, initItem
 local slideBackground
 local imageNumberText, imageNumberTextShadow
 
-function newItem(params)
+local function newItem(params)
 	local data = params.data
-	local top = params.top
-	local bottom = params.bottom
 	local callback = params.callback
 	local id = params.id
 	local x = params.x
@@ -49,8 +47,6 @@ function newItem(params)
 	local thisItem = display.newGroup()
 	thisItem.id = id
 	thisItem.data = data
-	thisItem.top = top
-	thisItem.bottom = bottom
 	local t = callback(data)
 	thisItem:insert( t )
 	thisItem:setReferencePoint(display.CenterReferencePoint)
@@ -87,8 +83,6 @@ function new(params)
 	for i = 1,2 do
 		local thisItem = newItem{
 			data = data[i],
-			top = top,
-			bottom = bottom,
 			callback = callback,
 			id = i,
 			x = screenW*1.5+pad,
@@ -128,7 +122,7 @@ function new(params)
 			elseif ( phase == "ended" or phase == "cancelled" ) then
 				dragDistance = touch.x - startPos
 				print("dragDistance: " .. dragDistance)
-				if (dragDistance < -40 and itemNum < #items) then nextItem()
+				if (dragDistance < -40 and itemNum < #data) then nextItem()
 				elseif (dragDistance > 40 and itemNum > 1) then prevItem()
 				else cancelMove()
 				end
@@ -153,8 +147,6 @@ function new(params)
 		if itemNum+1 <= #data then
 			local thisItem = newItem{
 				data = data[itemNum+1],
-				top = top,
-				bottom = bottom,
 				callback = callback,
 				id = i,
 				x = screenW * 1.5 + pad,
@@ -164,7 +156,6 @@ function new(params)
 			items[itemNum+1] = thisItem
 		end
 		if itemNum-2>0 then items[itemNum-2]:removeSelf() end
-
 		initItem(itemNum)
 	end
 	
@@ -175,8 +166,6 @@ function new(params)
 		if itemNum-1 > 0 then
 			local thisItem = newItem{
 				data = data[itemNum-1],
-				top = top,
-				bottom = bottom,
 				callback = callback,
 				id = i,
 				x = -1 * screenW*1.5-pad,
@@ -195,7 +184,7 @@ function new(params)
 		tween = transition.to( items[itemNum+1], {time=400, x=screenW*1.5+pad, transition=easing.outExpo } )
 	end
 	function initItem(num)
-		if (num < #items) then
+		if (num < #data) then
 			items[num+1].x = screenW*1.5 + pad			
 		end
 		if (num > 1) then
@@ -210,19 +199,36 @@ function new(params)
 	------------------------
 	-- Define public methods
 	
-	--function g:jumpToImage(num)
-	--	local i
-	--	print("jumpToImage")
-	--	print("#items", #items)
-	--	for i = 1, #items do
-	--		if i < num then items[i].x = -screenW*.5;
-	--		elseif i > num then items[i].x = screenW*1.5 + pad
-	--		else items[i].x = screenW*.5 - pad
-	--		end
-	--	end
-	--	itemNum = num
-	--	initItem(itemNum)
-	--end
+	function g:jumpToImage(num)
+		print("jumpToImage")
+		print("#data:", #data)
+		local i
+		for i=itemNum-1,itemNum+1 do
+			if i>0 and i<=#data then
+				items[i]:removeSelf()
+			end
+		end
+		for i = num-1, num+1 do
+			if i < num then initx = -screenW*.5;
+			elseif i > num then initx = screenW*1.5 + pad
+			else initx = screenW*.5 - pad
+			end
+			if i>0 and i<=#data then
+				local thisItem = newItem{
+					data = data[i],
+					callback = callback,
+					id = i,
+					x = initx,
+					y = screenH*.5
+				}
+				g:insert(thisItem)
+				items[i] = thisItem
+			end
+
+		end
+		itemNum = num
+		initItem(itemNum)
+	end
 	function g:cleanUp()
 		print("slides cleanUp")
 		slideBackground:removeEventListener("touch", touchListener)
