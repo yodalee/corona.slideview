@@ -21,3 +21,12 @@ callback = function(row1)
 end
 
 So you can have many image or text object in one slide.
+
+---
+
+Example:
+I have put an Example in this repository: the "main.lua", please follow the step below to test it:
+	Step 1: put slideview.lua into the Sample Code directory provided by Corona SDK, renamed as slideview_new.lua
+	Step 2: created myPhotos5.jpg to myPhotos8.jpg (duplicate 1~4 or put new images, etc.)
+	Step 3: Then run the main.lua, I think it will work. :)
+

@@ -12,7 +12,7 @@
 
 display.setStatusBar( display.HiddenStatusBar ) 
 
-local slideView = require("slideView")
+--local slideView = require("slideView")
 local slideView = require("slideView_new")
 	
 local myImages = {
